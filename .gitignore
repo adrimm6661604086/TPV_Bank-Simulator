@@ -1,0 +1,31 @@
+# Archivos binarios
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Archivos de compilación
+/build
+/bin
+
+# Archivos de dependencias
+vendor/
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos de configuración de IDEs
+.vscode/
+.idea/
+*.swp
+
+# Archivos de logs
+*.log
+
+# Archivos temporales
+*.tmp
+*.temp
