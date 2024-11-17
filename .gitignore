@@ -29,3 +29,6 @@ Thumbs.db
 # Archivos temporales
 *.tmp
 *.temp
+
+# Archivos de entorno
+.env
