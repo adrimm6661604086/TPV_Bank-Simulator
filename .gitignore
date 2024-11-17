@@ -11,6 +11,9 @@
 /build
 /bin
 
+# Otros archivos y/0 carpetas
+database/sql
+
 # Archivos de dependencias
 vendor/
 
