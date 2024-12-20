@@ -3,8 +3,10 @@ package routes
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/adrimm6661604086/TPV_Bank-Simulator/config"
+	"github.com/adrimm6661604086/TPV_Bank-Simulator/src/controllers"
 	"github.com/gin-gonic/gin"
 )
 
@@ -26,10 +28,37 @@ func Router(config config.Config) *gin.Engine {
 		c.File(logFilePath)
 	})
 
-	BankAccountRoutes(router)
-	CreditCardRoutes(router)
-	TransactionRoutes(router)
-	UserRoutes(router)
+	router.POST("/process-payment", func(c *gin.Context) {
+		creditCardNumber, _ := c.GetPostForm("creditCardNumber")
+		PIN, _ := c.GetPostForm("PIN")
+		creditCardHolder, _ := c.GetPostForm("creditCardHolder")
+		expirationDate, _ := c.GetPostForm("expirationDate")
+		CVC, _ := c.GetPostForm("CVC")
+
+		if creditCardNumber == "" || PIN == "" || creditCardHolder == "" || expirationDate == "" || CVC == "" {
+			c.JSON(400, gin.H{"message": "Missing credit card credentials"})
+			return
+		}
+
+		checkCard := controllers.VerifyCreditCard(creditCardNumber, PIN, creditCardHolder, expirationDate, CVC)
+
+		if checkCard.IsValid {
+			IBANorig, _ := c.GetPostForm("IBANorig")
+			amountStr, _ := c.GetPostForm("amount")
+			amount, err := strconv.ParseFloat(amountStr, 64)
+
+			if err != nil {
+				c.JSON(400, gin.H{"message": "Invalid amount"})
+				return
+			}
+
+			controllers.ProcessPayment(IBANorig, checkCard.IBANdst, amount)
+
+			c.JSON(200, gin.H{"message": "Credit card credentials verified"})
+		} else {
+			c.JSON(400, gin.H{"message": "Credit card credentials not verified"})
+		}
+	})
 
 	return router
 }
