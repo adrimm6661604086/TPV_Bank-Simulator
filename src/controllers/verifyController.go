@@ -26,10 +26,10 @@ type CreditCardVerificationResult struct {
 * @param CVC: CVC de la tarjeta de crédito
 * @return
  */
-func VerifyCreditCard(creditCardNumber string, PIN string, creditCardHolder string, expirationDate string, CVC string) CreditCardVerificationResult {
+func VerifyCreditCard(creditCardNumber string, creditCardHolder string, expirationDate string, CVC string) CreditCardVerificationResult {
 	log.Println("Verifying credit card credentials")
 
-	if len(creditCardNumber) == 0 || len(PIN) == 0 || len(creditCardHolder) == 0 || len(expirationDate) == 0 || len(CVC) == 0 {
+	if len(creditCardNumber) == 0 || len(creditCardHolder) == 0 || len(expirationDate) == 0 || len(CVC) == 0 {
 		log.Fatalln("Invalid input parameters")
 		return CreditCardVerificationResult{
 			IBANdst: "",
@@ -54,15 +54,6 @@ func VerifyCreditCard(creditCardNumber string, PIN string, creditCardHolder stri
 			IBANdst: "",
 			IsValid: false,
 			Error:   "Database error",
-		}
-	}
-
-	if cCard.PIN != PIN {
-		log.Fatalln("Invalid PIN")
-		return CreditCardVerificationResult{
-			IBANdst: "",
-			IsValid: false,
-			Error:   "Invalid PIN",
 		}
 	}
 
