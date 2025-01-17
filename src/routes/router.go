@@ -45,6 +45,43 @@ func Router(config config.Config) *gin.Engine {
 		checkCard := controllers.VerifyCreditCard(creditCardNumber, creditCardHolder, expirationDate, CVC)
 
 		if checkCard.IsValid {
+			IBANdst, _ := c.GetPostForm("IBANdst")
+			amountStr, _ := c.GetPostForm("amount")
+			amount, err := strconv.ParseFloat(amountStr, 64)
+
+			if err != nil {
+				c.JSON(400, gin.H{"message": "Invalid amount"})
+				return
+			}
+
+			checkPayment, _ := controllers.ProcessPayment(IBANdst, checkCard.IBAN, amount)
+
+			if checkPayment == nil {
+				c.JSON(400, gin.H{"message": "Payment failed"})
+			} else {
+				c.JSON(200, gin.H{"message": "Payment successful"})
+			}
+		} else {
+			c.JSON(400, gin.H{"message": "Credit card credentials not verified"})
+		}
+	})
+
+	router.POST("/return-payment", func(c *gin.Context) {
+		creditCardNumber, _ := c.GetPostForm("creditCardNumber")
+		creditCardHolder, _ := c.GetPostForm("creditCardHolder")
+		expirationDate, _ := c.GetPostForm("expirationDate")
+		CVC, _ := c.GetPostForm("CVC")
+
+		log.Println("Returning payment from credit card", creditCardNumber)
+
+		if creditCardNumber == "" || creditCardHolder == "" || expirationDate == "" || CVC == "" {
+			c.JSON(400, gin.H{"message": "Missing credit card credentials"})
+			return
+		}
+
+		checkCard := controllers.VerifyCreditCard(creditCardNumber, creditCardHolder, expirationDate, CVC)
+
+		if checkCard.IsValid {
 			IBANorig, _ := c.GetPostForm("IBANorig")
 			amountStr, _ := c.GetPostForm("amount")
 			amount, err := strconv.ParseFloat(amountStr, 64)
@@ -54,7 +91,7 @@ func Router(config config.Config) *gin.Engine {
 				return
 			}
 
-			checkPayment, _ := controllers.ProcessPayment(IBANorig, checkCard.IBANdst, amount)
+			checkPayment, _ := controllers.ProcessPayment(checkCard.IBAN, IBANorig, amount)
 
 			if checkPayment == nil {
 				c.JSON(400, gin.H{"message": "Payment failed"})
