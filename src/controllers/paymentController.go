@@ -14,20 +14,20 @@ import (
 /**
 * Process the payment on the bank simulator
 *
-* @param IBANorig: IBAN of the origin account
-* @param IBANdst: IBAN of the destination account
+* @param IBANdst: IBAN of the origin account
+* @param IBANorig: IBAN of the destination account
 * @param amount: amount of money to transfer
 * @return {}
  */
-func ProcessPayment(IBANorig string, IBANdst string, amount float64) (map[string]string, error) {
-	log.Println("Processing payment from", IBANorig, "to", IBANdst, "of", amount)
+func ProcessPayment(IBANdst string, IBANorig string, amount float64) (map[string]string, error) {
+	log.Println("Processing payment from", IBANdst, "to", IBANorig, "of", amount)
 
-	if IBANorig == "" || IBANdst == "" || amount <= 0 {
+	if IBANdst == "" || IBANorig == "" || amount <= 0 {
 		log.Println("Invalid payment data")
 		return nil, errors.New("invalid payment data")
 	}
 
-	if IBANorig == IBANdst {
+	if IBANdst == IBANorig {
 		log.Println("Origin and destination accounts are the same")
 		return nil, errors.New("origin and destination accounts cannot be the same")
 	}
@@ -39,10 +39,10 @@ func ProcessPayment(IBANorig string, IBANdst string, amount float64) (map[string
 	}
 
 	var originBalance float64
-	row := tx.Raw("SELECT balance FROM bank_accounts WHERE REPLACE(iban, ' ', '') = REPLACE(?, ' ', '')", IBANorig).Row()
+	row := tx.Raw("SELECT balance FROM bank_accounts WHERE REPLACE(iban, ' ', '') = REPLACE(?, ' ', '')", IBANdst).Row()
 	if err := row.Scan(&originBalance); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			log.Println("Origin account not found for IBAN:", IBANorig)
+			log.Println("Origin account not found for IBAN:", IBANdst)
 			tx.Rollback()
 			return nil, errors.New("origin account not found")
 		}
@@ -58,13 +58,13 @@ func ProcessPayment(IBANorig string, IBANdst string, amount float64) (map[string
 		return nil, errors.New("insufficient balance in origin account")
 	}
 
-	if err := tx.Exec("UPDATE bank_accounts SET balance = balance + ? WHERE REPLACE(iban, ' ', '') = REPLACE(?, ' ', '')", amount, IBANorig).Error; err != nil {
+	if err := tx.Exec("UPDATE bank_accounts SET balance = balance + ? WHERE REPLACE(iban, ' ', '') = REPLACE(?, ' ', '')", amount, IBANdst).Error; err != nil {
 		log.Println("Failed to debit origin account:", err)
 		tx.Rollback()
 		return nil, errors.New("failed to debit origin account")
 	}
 
-	if err := tx.Exec("UPDATE bank_accounts SET balance = balance - ? WHERE REPLACE(iban, ' ', '') = REPLACE(?, ' ', '')", amount, IBANdst).Error; err != nil {
+	if err := tx.Exec("UPDATE bank_accounts SET balance = balance - ? WHERE REPLACE(iban, ' ', '') = REPLACE(?, ' ', '')", amount, IBANorig).Error; err != nil {
 		log.Println("Failed to credit destination account:", err)
 		tx.Rollback()
 		return nil, errors.New("failed to credit destination account")
@@ -72,7 +72,7 @@ func ProcessPayment(IBANorig string, IBANdst string, amount float64) (map[string
 
 	transactionId := uuid.New().String()
 	if err := tx.Exec("INSERT INTO transactions (id, origin_account, destination_account, amount, date) VALUES (?, ?, ?, ?, ?)",
-		transactionId, IBANorig, IBANdst, amount, time.Now()).Error; err != nil {
+		transactionId, IBANdst, IBANorig, amount, time.Now()).Error; err != nil {
 		log.Println("Failed to register transaction:", err)
 		tx.Rollback()
 		return nil, errors.New("failed to register transaction")
