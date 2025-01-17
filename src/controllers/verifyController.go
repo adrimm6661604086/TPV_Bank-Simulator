@@ -10,7 +10,7 @@ import (
 )
 
 type CreditCardVerificationResult struct {
-	IBANdst string
+	IBAN    string
 	IsValid bool
 	Error   string
 }
@@ -32,7 +32,7 @@ func VerifyCreditCard(creditCardNumber string, creditCardHolder string, expirati
 	if len(creditCardNumber) == 0 || len(creditCardHolder) == 0 || len(expirationDate) == 0 || len(CVC) == 0 {
 		log.Fatalln("Invalid input parameters")
 		return CreditCardVerificationResult{
-			IBANdst: "",
+			IBAN:    "",
 			IsValid: false,
 			Error:   "Invalid input parameters",
 		}
@@ -44,14 +44,14 @@ func VerifyCreditCard(creditCardNumber string, creditCardHolder string, expirati
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Fatalln("Credit card not found")
 			return CreditCardVerificationResult{
-				IBANdst: "",
+				IBAN:    "",
 				IsValid: false,
 				Error:   "Credit card not found",
 			}
 		}
 		log.Fatalln("Database error:", err)
 		return CreditCardVerificationResult{
-			IBANdst: "",
+			IBAN:    "",
 			IsValid: false,
 			Error:   "Database error",
 		}
@@ -60,7 +60,7 @@ func VerifyCreditCard(creditCardNumber string, creditCardHolder string, expirati
 	if cCard.CVC != CVC {
 		log.Fatalln("Invalid CVC")
 		return CreditCardVerificationResult{
-			IBANdst: "",
+			IBAN:    "",
 			IsValid: false,
 			Error:   "Invalid CVC",
 		}
@@ -68,7 +68,7 @@ func VerifyCreditCard(creditCardNumber string, creditCardHolder string, expirati
 
 	log.Println("Credit card verified successfully")
 	return CreditCardVerificationResult{
-		IBANdst: cCard.IBAN,
+		IBAN:    cCard.IBAN,
 		IsValid: true,
 		Error:   "",
 	}
